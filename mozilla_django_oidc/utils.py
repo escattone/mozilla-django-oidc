@@ -159,3 +159,48 @@ def add_state_and_verifier_and_nonce_to_session(
         "nonce": nonce,
         "added_on": time.time(),
     }
+
+
+class AuthSettingsMixin:
+    """
+    Convenience class for getting, checking, and initializing authorization-related settings
+    """
+
+    def check_and_init_settings(self):
+        self.OIDC_OP_AUTHORIZATION_ENDPOINT = import_from_settings(
+            "OIDC_OP_AUTHORIZATION_ENDPOINT"
+        )
+        self.OIDC_RP_CLIENT_ID = import_from_settings("OIDC_RP_CLIENT_ID")
+        self.OIDC_STATE_SIZE = import_from_settings("OIDC_STATE_SIZE", 32)
+        self.OIDC_AUTHENTICATION_CALLBACK_URL = import_from_settings(
+            "OIDC_AUTHENTICATION_CALLBACK_URL",
+            "oidc_authentication_callback",
+        )
+        self.OIDC_RP_SCOPES = import_from_settings("OIDC_RP_SCOPES", "openid email")
+        self.OIDC_USE_NONCE = import_from_settings("OIDC_USE_NONCE", True)
+        self.OIDC_NONCE_SIZE = import_from_settings("OIDC_NONCE_SIZE", 32)
+
+        self.OIDC_USE_PKCE = import_from_settings("OIDC_USE_PKCE", False)
+        self.OIDC_PKCE_CODE_VERIFIER_SIZE = import_from_settings(
+            "OIDC_PKCE_CODE_VERIFIER_SIZE", 64
+        )
+
+        if not (43 <= self.OIDC_PKCE_CODE_VERIFIER_SIZE <= 128):
+            # Check that OIDC_PKCE_CODE_VERIFIER_SIZE is between the min and max length
+            # defined in https://datatracker.ietf.org/doc/html/rfc7636#section-4.1
+            raise ImproperlyConfigured(
+                "OIDC_PKCE_CODE_VERIFIER_SIZE must be between 43 and 128"
+            )
+
+        self.OIDC_PKCE_CODE_CHALLENGE_METHOD = import_from_settings(
+            "OIDC_PKCE_CODE_CHALLENGE_METHOD", "S256"
+        )
+
+        if self.OIDC_PKCE_CODE_CHALLENGE_METHOD not in ("plain", "S256"):
+            raise ImproperlyConfigured(
+                "OIDC_PKCE_CODE_CHALLENGE_METHOD must be 'plain' or 'S256'"
+            )
+
+        self.OIDC_AUTH_REQUEST_EXTRA_PARAMS = import_from_settings(
+            "OIDC_AUTH_REQUEST_EXTRA_PARAMS", {}
+        )
